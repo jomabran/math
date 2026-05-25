@@ -2,39 +2,729 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Mein GeoGebra-Applet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoGebra-Applet: Skalarprodukt zweier Vektoren</title>
+  <script src="https://www.geogebra.org/apps/deployggb.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 40px auto;
-      line-height: 1.5;
+    :root {
+      --ink: #16202a;
+      --muted: #5f6f7f;
+      --line: #d9e2ea;
+      --panel: #ffffff;
+      --soft: #f3f7f9;
+      --blue: #1768ac;
+      --green: #16845b;
+      --red: #b64242;
+      --amber: #bf7a14;
+      --shadow: 0 18px 45px rgba(29, 43, 56, 0.14);
     }
 
-    iframe {
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        linear-gradient(180deg, #eef6f8 0%, #ffffff 42%),
+        #ffffff;
+    }
+
+    header {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 16px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 5vw, 4.2rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      max-width: 780px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto 36px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .applet-shell,
+    .inspector {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .applet-shell {
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbfc;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .swatch.u {
+      background: var(--blue);
+    }
+
+    .swatch.v {
+      background: var(--green);
+    }
+
+    button {
+      border: 1px solid #b9c8d5;
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--ink);
+      min-height: 38px;
+      padding: 0 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #eef6fa;
+    }
+
+    #ggb-element {
       width: 100%;
-      height: 600px;
-      border: 1px solid #ccc;
+      min-height: 560px;
+      background: #ffffff;
+    }
+
+    .inspector {
+      padding: 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e8f2ee;
+      color: #0f6646;
+      font-weight: 700;
+      font-size: 0.94rem;
+      margin-bottom: 14px;
+    }
+
+    .badge.negative {
+      background: #f7e8e8;
+      color: #8f2f2f;
+    }
+
+    .badge.zero {
+      background: #fff3d9;
+      color: #8a5608;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 92px;
+      background: #fbfdfe;
+    }
+
+    .metric.full {
+      grid-column: 1 / -1;
+    }
+
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      display: block;
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .metric-note {
+      display: block;
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    .meter {
+      position: relative;
+      height: 20px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f0d5d5 0%, #f6f2df 50%, #cfe9de 100%);
+      border: 1px solid #cad6df;
+      overflow: hidden;
+      margin: 12px 0 8px;
+    }
+
+    .meter::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: rgba(22, 32, 42, 0.38);
+      z-index: 2;
+    }
+
+    .meter-fill {
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 50%;
+      width: 0;
+      border-radius: 999px;
+      background: var(--green);
+      transition: left 140ms ease, width 140ms ease, background-color 140ms ease;
+    }
+
+    .meter-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .interpretation {
+      margin: 12px 0 18px;
+      padding: 12px;
+      border-left: 4px solid var(--green);
+      background: var(--soft);
+      line-height: 1.45;
+    }
+
+    .interpretation.negative {
+      border-color: var(--red);
+    }
+
+    .interpretation.zero {
+      border-color: var(--amber);
+    }
+
+    .controls {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .vector-control {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    .vector-control h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    label {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) 62px;
+      align-items: center;
+      gap: 8px;
+      margin: 9px 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    input[type="number"] {
+      width: 62px;
+      border: 1px solid #b9c8d5;
+      border-radius: 6px;
+      padding: 7px 6px;
+      font: inherit;
+      color: var(--ink);
+    }
+
+    .loading {
+      min-height: 560px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .questions {
+      margin-top: 18px;
+      padding: 16px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .questions h2 {
+      color: var(--ink);
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+    }
+
+    .questions ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    @media (max-width: 920px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      #ggb-element,
+      .loading {
+        min-height: 500px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      header,
+      main {
+        width: min(100% - 20px, 1180px);
+      }
+
+      .toolbar,
+      .readout,
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .readout,
+      .control-grid {
+        display: grid;
+      }
+
+      .metric-value {
+        font-size: 1.45rem;
+      }
+
+      label {
+        grid-template-columns: 22px minmax(0, 1fr);
+      }
+
+      input[type="number"] {
+        grid-column: 2;
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>GeoGebra-Applet: Lineare Funktion</h1>
+  <header>
+    <h1>Skalarprodukt zweier Vektoren</h1>
+    <p class="intro">
+      Ziehe die Punkte A und B in der GeoGebra-Fläche oder ändere die Koordinaten über die Regler.
+      Die Auswertung zeigt live, ob die Vektoren in dieselbe Richtung zeigen, gegeneinander arbeiten
+      oder im Sonderfall senkrecht zueinander stehen.
+    </p>
+  </header>
 
-  <p>
-    Verändere die Parameter im Applet und beobachte, wie sich der Graph verändert.
-  </p>
+  <main>
+    <section class="workspace" aria-label="Interaktives Skalarprodukt-Applet">
+      <div class="applet-shell">
+        <div class="toolbar">
+          <div class="legend" aria-label="Legende">
+            <span><i class="swatch u"></i> Vektor u = OA</span>
+            <span><i class="swatch v"></i> Vektor v = OB</span>
+          </div>
+          <button type="button" id="reset-button" title="Ausgangslage wiederherstellen">Zurücksetzen</button>
+        </div>
+        <div id="ggb-element">
+          <div class="loading">GeoGebra wird geladen...</div>
+        </div>
+      </div>
 
-  <iframe
-    src="https://www.geogebra.org/classic?embed"
-    allowfullscreen>
-  </iframe>
+      <aside class="inspector" aria-label="Live-Auswertung">
+        <div id="status-badge" class="badge">positive Übereinstimmung</div>
 
-  <h2>Arbeitsauftrag</h2>
-  <ol>
-    <li>Verändere die Steigung der Geraden.</li>
-    <li>Beschreibe, was mit dem Graphen passiert.</li>
-    <li>Formuliere eine Vermutung zur Bedeutung der Steigung.</li>
-  </ol>
+        <div class="readout">
+          <div class="metric full">
+            <span class="metric-label">Skalarprodukt u · v</span>
+            <span class="metric-value" id="dot-value">0</span>
+            <span class="metric-note" id="dot-formula">(0 · 0) + (0 · 0)</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Winkel</span>
+            <span class="metric-value" id="angle-value">0°</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">cos(φ)</span>
+            <span class="metric-value" id="cos-value">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">|u|</span>
+            <span class="metric-value" id="len-u">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">|v|</span>
+            <span class="metric-value" id="len-v">0</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="meter" aria-label="Übereinstimmung von -1 bis 1">
+            <div class="meter-fill" id="meter-fill"></div>
+          </div>
+          <div class="meter-labels">
+            <span>entgegengesetzt</span>
+            <span>senkrecht</span>
+            <span>gleichgerichtet</span>
+          </div>
+        </div>
+
+        <p class="interpretation" id="interpretation">
+          Beide Vektoren haben einen Anteil in dieselbe Richtung. Das Skalarprodukt ist positiv.
+        </p>
+
+        <div class="controls">
+          <div class="control-grid">
+            <section class="vector-control" aria-label="Vektor u einstellen">
+              <h2>Vektor u</h2>
+              <label>
+                x
+                <input type="range" id="ax-range" min="-5" max="5" step="0.1" value="3">
+                <input type="number" id="ax-number" min="-5" max="5" step="0.1" value="3">
+              </label>
+              <label>
+                y
+                <input type="range" id="ay-range" min="-5" max="5" step="0.1" value="2">
+                <input type="number" id="ay-number" min="-5" max="5" step="0.1" value="2">
+              </label>
+            </section>
+
+            <section class="vector-control" aria-label="Vektor v einstellen">
+              <h2>Vektor v</h2>
+              <label>
+                x
+                <input type="range" id="bx-range" min="-5" max="5" step="0.1" value="2">
+                <input type="number" id="bx-number" min="-5" max="5" step="0.1" value="2">
+              </label>
+              <label>
+                y
+                <input type="range" id="by-range" min="-5" max="5" step="0.1" value="-1">
+                <input type="number" id="by-number" min="-5" max="5" step="0.1" value="-1">
+              </label>
+            </section>
+          </div>
+        </div>
+
+        <section class="questions" aria-label="Arbeitsaufträge">
+          <h2>Arbeitsauftrag</h2>
+          <ol>
+            <li>Verändere die Richtung eines Vektors und beobachte Vorzeichen und Betrag des Skalarprodukts.</li>
+            <li>Stelle die Vektoren so ein, dass u · v = 0 ist. Beschreibe die Lage der Vektoren.</li>
+            <li>Erkläre mit cos(φ), warum das Skalarprodukt Übereinstimmung in Richtung misst.</li>
+          </ol>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const initialVectors = {
+      ax: 3,
+      ay: 2,
+      bx: 2,
+      by: -1
+    };
+
+    const inputs = {
+      ax: [document.getElementById("ax-range"), document.getElementById("ax-number")],
+      ay: [document.getElementById("ay-range"), document.getElementById("ay-number")],
+      bx: [document.getElementById("bx-range"), document.getElementById("bx-number")],
+      by: [document.getElementById("by-range"), document.getElementById("by-number")]
+    };
+
+    const output = {
+      badge: document.getElementById("status-badge"),
+      dot: document.getElementById("dot-value"),
+      formula: document.getElementById("dot-formula"),
+      angle: document.getElementById("angle-value"),
+      cos: document.getElementById("cos-value"),
+      lenU: document.getElementById("len-u"),
+      lenV: document.getElementById("len-v"),
+      meter: document.getElementById("meter-fill"),
+      interpretation: document.getElementById("interpretation")
+    };
+
+    let ggb = null;
+    let syncing = false;
+
+    function fixed(value, digits = 2) {
+      if (!Number.isFinite(value)) {
+        return "nicht definiert";
+      }
+      const rounded = Number(value.toFixed(digits));
+      return Object.is(rounded, -0) ? "0" : rounded.toLocaleString("de-DE");
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function classify(dot, cos) {
+      if (Math.abs(dot) < 0.05) {
+        return {
+          kind: "zero",
+          badge: "Sonderfall: u · v = 0",
+          text: "Das Skalarprodukt ist 0. Die Vektoren stehen senkrecht aufeinander oder einer der Vektoren hat die Länge 0.",
+          color: "var(--amber)"
+        };
+      }
+
+      if (dot > 0) {
+        return {
+          kind: "positive",
+          badge: "positive Übereinstimmung",
+          text: "Beide Vektoren haben einen Anteil in dieselbe Richtung. Je größer dieser Anteil und je länger die Vektoren sind, desto größer wird u · v.",
+          color: "var(--green)"
+        };
+      }
+
+      return {
+        kind: "negative",
+        badge: "entgegengesetzte Richtung",
+        text: "Die Vektoren zeigen überwiegend in entgegengesetzte Richtungen. Das Skalarprodukt wird negativ.",
+        color: "var(--red)"
+      };
+    }
+
+    function setControlValues(values) {
+      syncing = true;
+      for (const [key, elements] of Object.entries(inputs)) {
+        elements.forEach((element) => {
+          element.value = fixed(values[key], 1).replace(",", ".");
+        });
+      }
+      syncing = false;
+    }
+
+    function getControlValues() {
+      return {
+        ax: Number(inputs.ax[0].value),
+        ay: Number(inputs.ay[0].value),
+        bx: Number(inputs.bx[0].value),
+        by: Number(inputs.by[0].value)
+      };
+    }
+
+    function updatePanel(values) {
+      const dot = values.ax * values.bx + values.ay * values.by;
+      const lenU = Math.hypot(values.ax, values.ay);
+      const lenV = Math.hypot(values.bx, values.by);
+      const cos = lenU > 0.0001 && lenV > 0.0001 ? clamp(dot / (lenU * lenV), -1, 1) : NaN;
+      const angle = Number.isFinite(cos) ? Math.acos(cos) * 180 / Math.PI : NaN;
+      const state = classify(dot, cos);
+
+      output.dot.textContent = fixed(dot, 2);
+      output.formula.textContent = `(${fixed(values.ax, 1)} · ${fixed(values.bx, 1)}) + (${fixed(values.ay, 1)} · ${fixed(values.by, 1)})`;
+      output.angle.textContent = Number.isFinite(angle) ? `${fixed(angle, 1)}°` : "nicht definiert";
+      output.cos.textContent = fixed(cos, 2);
+      output.lenU.textContent = fixed(lenU, 2);
+      output.lenV.textContent = fixed(lenV, 2);
+
+      output.badge.className = `badge ${state.kind}`;
+      output.badge.textContent = state.badge;
+      output.interpretation.className = `interpretation ${state.kind}`;
+      output.interpretation.textContent = state.text;
+
+      const normalized = Number.isFinite(cos) ? cos : 0;
+      const magnitude = Math.abs(normalized) * 50;
+      output.meter.style.width = `${magnitude}%`;
+      output.meter.style.left = normalized < 0 ? `${50 - magnitude}%` : "50%";
+      output.meter.style.backgroundColor = state.color;
+    }
+
+    function updateFromGeoGebra() {
+      if (!ggb || syncing) {
+        return;
+      }
+
+      const values = {
+        ax: clamp(ggb.getXcoord("A"), -5, 5),
+        ay: clamp(ggb.getYcoord("A"), -5, 5),
+        bx: clamp(ggb.getXcoord("B"), -5, 5),
+        by: clamp(ggb.getYcoord("B"), -5, 5)
+      };
+
+      setControlValues(values);
+      updatePanel(values);
+    }
+
+    function setGeoGebraVectors(values) {
+      if (!ggb) {
+        updatePanel(values);
+        return;
+      }
+
+      syncing = true;
+      ggb.setCoords("A", values.ax, values.ay);
+      ggb.setCoords("B", values.bx, values.by);
+      syncing = false;
+      updatePanel(values);
+    }
+
+    function syncFromInput(changedKey, value) {
+      if (syncing) {
+        return;
+      }
+
+      const normalized = clamp(Number(value), -5, 5);
+      inputs[changedKey].forEach((element) => {
+        element.value = String(normalized);
+      });
+
+      setGeoGebraVectors(getControlValues());
+    }
+
+    function resetApplet() {
+      setControlValues(initialVectors);
+      setGeoGebraVectors(initialVectors);
+    }
+
+    function setupApplet(api) {
+      ggb = api;
+      ggb.setPerspective("G");
+      ggb.setAxesVisible(true, true);
+      ggb.setGridVisible(true);
+      ggb.evalCommand("SetCoordSystem(-6, 6, -5, 5)");
+      ggb.evalCommand("O = (0, 0)");
+      ggb.evalCommand("A = (3, 2)");
+      ggb.evalCommand("B = (2, -1)");
+      ggb.evalCommand("u = Vector(O, A)");
+      ggb.evalCommand("v = Vector(O, B)");
+      ggb.evalCommand("w = Segment(A, B)");
+      ggb.evalCommand("alpha = Angle(u, v)");
+      ggb.evalCommand("SetColor(u, 23, 104, 172)");
+      ggb.evalCommand("SetColor(v, 22, 132, 91)");
+      ggb.evalCommand("SetColor(w, 120, 135, 150)");
+      ggb.evalCommand("SetLineThickness(u, 8)");
+      ggb.evalCommand("SetLineThickness(v, 8)");
+      ggb.evalCommand("SetLineThickness(w, 2)");
+      ggb.evalCommand("SetLineStyle(w, 1)");
+      ggb.evalCommand("SetPointSize(A, 7)");
+      ggb.evalCommand("SetPointSize(B, 7)");
+      ggb.evalCommand("SetPointSize(O, 5)");
+      ggb.evalCommand("SetColor(A, 23, 104, 172)");
+      ggb.evalCommand("SetColor(B, 22, 132, 91)");
+      ggb.evalCommand("SetColor(O, 70, 70, 70)");
+      ggb.evalCommand("SetLabelMode(A, 1)");
+      ggb.evalCommand("SetLabelMode(B, 1)");
+      ggb.evalCommand("SetCaption(A, \"A = Spitze von u\")");
+      ggb.evalCommand("SetCaption(B, \"B = Spitze von v\")");
+      ggb.evalCommand("SetFixed(O, true)");
+      ggb.evalCommand("SetFixed(A, false)");
+      ggb.evalCommand("SetFixed(B, false)");
+      ggb.evalCommand("SetVisibleInView(alpha, 1, true)");
+      ggb.registerObjectUpdateListener("A", "updateFromGeoGebra");
+      ggb.registerObjectUpdateListener("B", "updateFromGeoGebra");
+      updateFromGeoGebra();
+    }
+
+    window.updateFromGeoGebra = updateFromGeoGebra;
+
+    Object.entries(inputs).forEach(([key, elements]) => {
+      elements.forEach((element) => {
+        element.addEventListener("input", (event) => syncFromInput(key, event.target.value));
+        element.addEventListener("change", (event) => syncFromInput(key, event.target.value));
+      });
+    });
+
+    document.getElementById("reset-button").addEventListener("click", resetApplet);
+
+    updatePanel(initialVectors);
+
+    window.addEventListener("load", () => {
+      const parameters = {
+        appName: "classic",
+        width: 780,
+        height: 560,
+        showToolBar: false,
+        showAlgebraInput: false,
+        showMenuBar: false,
+        showResetIcon: false,
+        enableLabelDrags: false,
+        enableShiftDragZoom: true,
+        enableRightClick: false,
+        useBrowserForJS: true,
+        language: "de",
+        appletOnLoad: setupApplet
+      };
+
+      const applet = new GGBApplet(parameters, true);
+      applet.inject("ggb-element");
+    });
+  </script>
 </body>
 </html>
