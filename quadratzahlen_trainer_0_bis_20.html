@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quadratzahlen-Trainer 0 bis 20</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --success: #15803d;
+      --success-soft: #dcfce7;
+      --error: #b91c1c;
+      --error-soft: #fee2e2;
+      --border: #d0d5dd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(760px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 12px 35px rgba(16, 24, 40, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .mode-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .quiz-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .prompt-label {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+
+    .question {
+      font-size: clamp(2.4rem, 8vw, 4.8rem);
+      font-weight: 700;
+      margin: 8px 0 22px;
+      line-height: 1.1;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    input[type="number"] {
+      width: min(260px, 100%);
+      font-size: 1.4rem;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    button.primary {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .feedback {
+      min-height: 52px;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .feedback.neutral {
+      background: #f8fafc;
+      color: var(--muted);
+    }
+
+    .feedback.correct {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .feedback.wrong {
+      background: var(--error-soft);
+      color: var(--error);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    @media (max-width: 520px) {
+      .app { padding: 20px; }
+      .stats { grid-template-columns: 1fr; }
+      .answer-row { flex-direction: column; align-items: stretch; }
+      input[type="number"] { width: 100%; }
+      button.primary { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Quadratzahlen-Trainer</h1>
+    <p class="subtitle">
+      Trainiere die Quadratzahlen von 0 bis 20. Die Aufgaben erscheinen zufällig und laufen ohne Ende weiter.
+    </p>
+
+    <div class="controls" aria-label="Abfragemodus wählen">
+      <button class="mode-btn active" data-mode="mixed" type="button">Gemischt</button>
+      <button class="mode-btn" data-mode="square" type="button">Zahl → Quadrat</button>
+      <button class="mode-btn" data-mode="root" type="button">Quadrat → Zahl</button>
+    </div>
+
+    <section class="quiz-card">
+      <div class="prompt-label" id="promptLabel">Welche Zahl gehört dazu?</div>
+      <div class="question" id="question">7² = ?</div>
+
+      <form id="answerForm" class="answer-row" autocomplete="off">
+        <input
+          id="answerInput"
+          type="number"
+          inputmode="numeric"
+          step="1"
+          placeholder="Antwort"
+          aria-label="Antwort eingeben"
+          required
+        />
+        <button class="primary" type="submit">Prüfen</button>
+      </form>
+
+      <div id="feedback" class="feedback neutral" aria-live="polite">
+        Gib deine Antwort ein und drücke Enter.
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Statistik">
+      <div class="stat">
+        <strong id="askedCount">0</strong>
+        <span>Aufgaben</span>
+      </div>
+      <div class="stat">
+        <strong id="correctCount">0</strong>
+        <span>richtig</span>
+      </div>
+      <div class="stat">
+        <strong id="streakCount">0</strong>
+        <span>Serie</span>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      Bereich: 0 bis 20 · Quadrate: 0 bis 400
+    </p>
+  </main>
+
+  <script>
+    (() => {
+      const questionEl = document.getElementById("question");
+      const promptLabelEl = document.getElementById("promptLabel");
+      const answerInput = document.getElementById("answerInput");
+      const answerForm = document.getElementById("answerForm");
+      const feedbackEl = document.getElementById("feedback");
+      const askedCountEl = document.getElementById("askedCount");
+      const correctCountEl = document.getElementById("correctCount");
+      const streakCountEl = document.getElementById("streakCount");
+      const modeButtons = [...document.querySelectorAll(".mode-btn")];
+
+      let mode = "mixed";
+      let currentNumber = 0;
+      let currentType = "square";
+      let asked = 0;
+      let correct = 0;
+      let streak = 0;
+      let lastKey = null;
+      let waitingForNext = false;
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function chooseType() {
+        if (mode === "square") return "square";
+        if (mode === "root") return "root";
+        return Math.random() < 0.5 ? "square" : "root";
+      }
+
+      function generateQuestion() {
+        let number;
+        let type;
+        let key;
+
+        do {
+          number = randomInt(0, 20);
+          type = chooseType();
+          key = `${type}-${number}`;
+        } while (key === lastKey);
+
+        lastKey = key;
+        currentNumber = number;
+        currentType = type;
+        waitingForNext = false;
+
+        if (type === "square") {
+          promptLabelEl.textContent = "Berechne das Quadrat:";
+          questionEl.textContent = `${number}² = ?`;
+        } else {
+          promptLabelEl.textContent = "Welche Zahl wurde quadriert?";
+          questionEl.textContent = `?² = ${number * number}`;
+        }
+
+        answerInput.value = "";
+        feedbackEl.className = "feedback neutral";
+        feedbackEl.textContent = "Gib deine Antwort ein und drücke Enter.";
+        answerInput.focus();
+      }
+
+      function expectedAnswer() {
+        return currentType === "square"
+          ? currentNumber * currentNumber
+          : currentNumber;
+      }
+
+      function showStats() {
+        askedCountEl.textContent = asked;
+        correctCountEl.textContent = correct;
+        streakCountEl.textContent = streak;
+      }
+
+      function checkAnswer(event) {
+        event.preventDefault();
+
+        if (waitingForNext) {
+          generateQuestion();
+          return;
+        }
+
+        const raw = answerInput.value.trim();
+        if (raw === "") return;
+
+        const userAnswer = Number(raw);
+        const expected = expectedAnswer();
+
+        asked++;
+
+        if (userAnswer === expected) {
+          correct++;
+          streak++;
+          feedbackEl.className = "feedback correct";
+          feedbackEl.textContent = "Richtig! Weiter geht's …";
+          waitingForNext = true;
+          showStats();
+
+          setTimeout(() => {
+            if (waitingForNext) generateQuestion();
+          }, 650);
+        } else {
+          streak = 0;
+          feedbackEl.className = "feedback wrong";
+          feedbackEl.textContent = `Noch nicht. Richtige Antwort: ${expected}`;
+          waitingForNext = true;
+          showStats();
+
+          setTimeout(() => {
+            if (waitingForNext) generateQuestion();
+          }, 1200);
+        }
+      }
+
+      answerForm.addEventListener("submit", checkAnswer);
+
+      modeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          mode = btn.dataset.mode;
+          modeButtons.forEach(b => b.classList.toggle("active", b === btn));
+          generateQuestion();
+        });
+      });
+
+      generateQuestion();
+    })();
+  </script>
+</body>
+</html>
