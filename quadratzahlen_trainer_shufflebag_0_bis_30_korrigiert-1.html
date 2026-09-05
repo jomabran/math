@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quadratzahlen-Trainer</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--text:#172033;--muted:#667085;--border:#d0d5dd;--accent:#2563eb;--accent-soft:#dbeafe;--success:#15803d;--success-soft:#dcfce7;--error:#b91c1c;--error-soft:#fee2e2}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.app{width:min(820px,100%);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;box-shadow:0 12px 34px rgba(16,24,40,.08)}
+h1{margin:0 0 8px;font-size:clamp(1.9rem,4vw,2.6rem)}.subtitle{margin:0 0 22px;color:var(--muted);line-height:1.5}
+.section-label{font-size:.88rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:18px 0 10px}
+.tile-grid,.mode-grid{display:grid;gap:10px;grid-template-columns:repeat(3,1fr)}
+.tile,.mode-btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:12px;padding:14px 12px;min-height:64px;cursor:pointer;font-size:1rem;font-weight:700}
+.tile small,.mode-btn small{display:block;margin-top:4px;color:var(--muted);font-weight:400}.tile.active,.mode-btn.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.quiz-card{border:1px solid var(--border);border-radius:16px;padding:30px 20px;margin-top:22px;text-align:center}.prompt-label{color:var(--muted);font-size:.95rem;margin-bottom:8px}
+.question{font-size:clamp(2.8rem,9vw,5.2rem);font-weight:800;line-height:1.05;margin:10px 0 24px}
+.answer-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+input[type=number]{width:min(280px,100%);font-size:1.45rem;padding:12px 14px;border:2px solid var(--border);border-radius:10px;text-align:center}
+input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.primary{border:0;border-radius:10px;background:var(--accent);color:#fff;padding:12px 18px;font-size:1rem;font-weight:700;cursor:pointer}
+.feedback{min-height:52px;display:flex;align-items:center;justify-content:center;margin-top:18px;padding:12px 14px;border-radius:10px;font-weight:700}
+.feedback.neutral{background:#f8fafc;color:var(--muted)}.feedback.correct{background:var(--success-soft);color:var(--success)}.feedback.wrong{background:var(--error-soft);color:var(--error)}
+.status-row{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:16px}.round-box,.retry-box{border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.round-box strong,.retry-box strong{display:block;margin-bottom:3px}.round-box span,.retry-box span{color:var(--muted);font-size:.9rem}
+.progress{height:8px;background:#edf0f4;border-radius:999px;overflow:hidden;margin-top:9px}.progress>div{height:100%;width:0;background:var(--accent);transition:width .2s ease}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.stat{border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center}
+.stat strong{display:block;font-size:1.45rem;margin-bottom:3px}.stat span{color:var(--muted);font-size:.88rem}.note{margin:16px 0 0;color:var(--muted);font-size:.9rem;line-height:1.45;text-align:center}
+@media(max-width:680px){.app{padding:20px}.tile-grid,.mode-grid{grid-template-columns:1fr}.status-row{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){body{padding:12px}.stats{grid-template-columns:1fr}.answer-row{flex-direction:column}.primary,input[type=number]{width:100%}}
+</style>
+</head>
+<body>
+<main class="app">
+<h1>Quadratzahlen-Trainer</h1>
+<p class="subtitle">Jede Zahl eines gewählten Bereichs kommt pro Runde genau einmal vor. Falsch beantwortete Aufgaben werden später zusätzlich wiederholt.</p>
+
+<div class="section-label">Zahlenbereich</div>
+<div class="tile-grid">
+<button class="tile active" data-range="0-20" type="button">0 bis 20<small>Grundbereich</small></button>
+<button class="tile" data-range="21-30" type="button">21 bis 30<small>Zusatztraining</small></button>
+<button class="tile" data-range="0-30" type="button">0 bis 30<small>Alles gemischt</small></button>
+</div>
+
+<div class="section-label">Abfragemodus</div>
+<div class="mode-grid">
+<button class="mode-btn active" data-mode="mixed" type="button">Gemischt<small>beide Richtungen zufällig</small></button>
+<button class="mode-btn" data-mode="square" type="button">Zahl → Quadrat<small>z. B. 17² = ?</small></button>
+<button class="mode-btn" data-mode="root" type="button">Quadrat → Zahl<small>z. B. ?² = 289</small></button>
+</div>
+
+<section class="quiz-card">
+<div class="prompt-label" id="promptLabel"></div>
+<div class="question" id="question"></div>
+<form id="answerForm" class="answer-row" autocomplete="off">
+<input id="answerInput" type="number" inputmode="numeric" step="1" placeholder="Antwort" aria-label="Antwort eingeben" required>
+<button class="primary" type="submit">Prüfen</button>
+</form>
+<div id="feedback" class="feedback neutral" aria-live="polite">Gib deine Antwort ein und drücke Enter.</div>
+</section>
+
+<div class="status-row">
+<div class="round-box"><strong id="roundText">Runde 1</strong><span id="roundDetail"></span><div class="progress"><div id="progressBar"></div></div></div>
+<div class="retry-box"><strong>Wiederholungen</strong><span id="retryText">Keine offenen Fehler</span></div>
+</div>
+
+<section class="stats">
+<div class="stat"><strong id="askedCount">0</strong><span>Aufgaben</span></div>
+<div class="stat"><strong id="correctCount">0</strong><span>richtig</span></div>
+<div class="stat"><strong id="streakCount">0</strong><span>Serie</span></div>
+<div class="stat"><strong id="accuracyCount">–</strong><span>Trefferquote</span></div>
+</section>
+<p class="note">System: Alle Zahlen werden pro Runde wie ein Kartenstapel zufällig gemischt. Fehler werden mit etwas Abstand erneut eingestreut.</p>
+</main>
+
+<script>
+(()=>{
+const q=document.getElementById('question'), pl=document.getElementById('promptLabel'), inp=document.getElementById('answerInput'),
+form=document.getElementById('answerForm'), fb=document.getElementById('feedback'), askedEl=document.getElementById('askedCount'),
+correctEl=document.getElementById('correctCount'), streakEl=document.getElementById('streakCount'), accEl=document.getElementById('accuracyCount'),
+roundEl=document.getElementById('roundText'), detailEl=document.getElementById('roundDetail'), prog=document.getElementById('progressBar'),
+retryEl=document.getElementById('retryText'), rangeBtns=[...document.querySelectorAll('.tile')], modeBtns=[...document.querySelectorAll('.mode-btn')];
+
+let range='0-20', mode='mixed', deck=[], retries=[], current=null, round=1, baseTotal=21, baseDone=0, asked=0, correct=0, streak=0, waiting=false;
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function nums(){let s=0,e=20;if(range==='21-30'){s=21;e=30}else if(range==='0-30'){s=0;e=30}return Array.from({length:e-s+1},(_,i)=>s+i)}
+function build(){const n=nums();baseTotal=n.length;baseDone=0;deck=shuffle(n.map(number=>({number,isRetry:false})))}
+function type(){if(mode==='square'||mode==='root')return mode;return Math.random()<.5?'square':'root'}
+function maybeRetry(){if(!retries.length)return;if(deck.length===0||Math.random()<.30){const r=retries.shift();const pos=Math.min(deck.length,Math.floor(Math.random()*3)+1);deck.splice(pos,0,r)}}
+function next(){
+ if(!deck.length){if(retries.length){deck=shuffle(retries.splice(0))}else{round++;build()}}
+ maybeRetry(); current=deck.shift(); current.type=type(); waiting=false;
+ if(current.type==='square'){pl.textContent='Berechne das Quadrat:';q.textContent=`${current.number}² = ?`}
+ else{pl.textContent='Welche Zahl wurde quadriert?';q.textContent=`?² = ${current.number*current.number}`}
+ inp.value='';fb.className='feedback neutral';fb.textContent='Gib deine Antwort ein und drücke Enter.';status();inp.focus()
+}
+function expected(){return current.type==='square'?current.number*current.number:current.number}
+function queueRetry(n){const exists=retries.some(x=>x.number===n)||deck.some(x=>x.isRetry&&x.number===n);if(!exists)retries.push({number:n,isRetry:true})}
+function stats(){askedEl.textContent=asked;correctEl.textContent=correct;streakEl.textContent=streak;accEl.textContent=asked?Math.round(correct/asked*100)+' %':'–'}
+function status(){
+ roundEl.textContent='Runde '+round;detailEl.textContent=`${Math.min(baseDone,baseTotal)} von ${baseTotal} Grundaufgaben bearbeitet`;
+ prog.style.width=Math.min(100,baseDone/baseTotal*100)+'%';
+ const open=retries.length+deck.filter(x=>x.isRetry).length;retryEl.textContent=open?`${open} Aufgabe${open===1?'':'n'} zur Wiederholung vorgemerkt`:'Keine offenen Fehler'
+}
+function reset(){deck=[];retries=[];current=null;round=1;asked=0;correct=0;streak=0;waiting=false;build();stats();next()}
+
+form.addEventListener('submit',e=>{
+ e.preventDefault();if(waiting){next();return}
+ const raw=inp.value.trim();if(raw==='')return;const val=Number(raw), exp=expected();asked++;
+ if(!current.isRetry)baseDone++;
+ if(val===exp){correct++;streak++;fb.className='feedback correct';fb.textContent='Richtig!'}
+ else{streak=0;queueRetry(current.number);fb.className='feedback wrong';fb.textContent=`Noch nicht. Richtig ist ${exp}. Diese Zahl kommt später noch einmal.`}
+ waiting=true;stats();status();setTimeout(()=>{if(waiting)next()},val===exp?650:1450)
+});
+rangeBtns.forEach(b=>b.addEventListener('click',()=>{range=b.dataset.range;rangeBtns.forEach(x=>x.classList.toggle('active',x===b));reset()}));
+modeBtns.forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;modeBtns.forEach(x=>x.classList.toggle('active',x===b));reset()}));
+reset();
+})();
+</script>
+</body>
+</html>
